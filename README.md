@@ -1,43 +1,66 @@
-# Astro Starter Kit: Minimal
+# [JUST-ARCHIVE]
 
-```sh
-pnpm create astro@latest -- --template minimal
+[![astro](https://img.shields.io/badge/astro-0c0c0c?style=flat-square&logo=astro&logoColor=white)](https://astro.build) [![vercel](https://img.shields.io/badge/vercel-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com)
+
+[*/carlosruiz:*](https://justarchive.us.ci/carlosruiz)
+
+![preview](https://i.imgur.com/wbg1So6.png)
+
+---
+
+## index
+
+- [features](#features)
+- [commands](#commands)
+- [deployment](#deployment)
+- [typefaces](#typefaces)
+- [credits](#credits)
+
+---
+
+## features
+
+**dark/light theme** — system preference detection with localStorage persistence  
+**custom typography** — walkway, telegraf, chivo mono  
+**image albums** — grid layout with hover animations and lazy loading  
+**music integration** — track listings with vertical social links  
+**mobile-first** — clean, minimal, zero unnecessary javascript
+
+---
+
+## commands
+```bash
+pnpm install    # install dependencies
+pnpm dev        # start dev server at localhost:4321
+pnpm build      # build static site to ./dist/
+pnpm preview    # preview production build locally
+pnpm astro ...  # run astro cli commands
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+---
 
-## 🚀 Project Structure
+## deployment
 
-Inside of your Astro project, you'll see the following folders and files:
+**vercel (recommended)**
+```bash
+# push to github
+git push origin main
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+# import on vercel.com
+# automatic astro detection + static adapter
+# live at https://justarchive.us.ci/carlosruiz
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+---
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+## typefaces
 
-Any static assets, like images, can be placed in the `public/` directory.
+[**walkway**](https://fonts.cdnfonts.com/css/walkway-black-revoblique) — footer logo  
+[**telegraf**](https://fonts.cdnfonts.com/css/telegraf) — name display  
+[**chivo mono**](https://fonts.cdnfonts.com/css/chivo-mono) — body text
 
-## 🧞 Commands
+---
 
-All commands are run from the root of the project, from a terminal:
+## credits
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+developed by [Carlos Ruiz](https://github.com/zektrace) <code> <@zektrace> </code>  
