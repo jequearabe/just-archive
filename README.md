@@ -8,27 +8,7 @@
 
 ---
 
-## index
-
-- [features](#features)
-- [commands](#commands)
-- [deployment](#deployment)
-- [typefaces](#typefaces)
-- [credits](#credits)
-
----
-
-## features
-
-**dark/light theme** — system preference detection with localStorage persistence  
-**custom typography** — walkway, telegraf, chivo mono  
-**image albums** — grid layout with hover animations and lazy loading  
-**music integration** — track listings with vertical social links  
-**mobile-first** — clean, minimal, zero unnecessary javascript
-
----
-
-## commands
+## Commands
 ```bash
 pnpm install    # install dependencies
 pnpm dev        # start dev server at localhost:4321
@@ -39,9 +19,9 @@ pnpm astro ...  # run astro cli commands
 
 ---
 
-## deployment
+## Deployment
 
-**vercel (recommended)**
+**Vercel (recommended)**
 ```bash
 # push to github
 git push origin main
@@ -51,16 +31,6 @@ git push origin main
 # live at https://justarchive.us.ci/carlosruiz
 ```
 
----
+## Credits
 
-## typefaces
-
-[**walkway**](https://fonts.cdnfonts.com/css/walkway-black-revoblique) — footer logo  
-[**telegraf**](https://fonts.cdnfonts.com/css/telegraf) — name display  
-[**chivo mono**](https://fonts.cdnfonts.com/css/chivo-mono) — body text
-
----
-
-## credits
-
-developed by [Carlos Ruiz](https://github.com/zektrace) <code> <@zektrace> </code>  
+Developed by <a href="https://github.com/zektrace"><code><@zektrace></code></a>
