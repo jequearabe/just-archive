@@ -1,0 +1,149 @@
+---
+import { query } from '../lib/db';
+export const prerender = false;
+const { slug } = Astro.params;
+const result = await query('SELECT title, content_json FROM user_pages WHERE slug = $1', [slug]);
+if (result.rows.length === 0) return Astro.redirect('/404');
+const page = result.rows[0];
+const blocks = page.content_json?.blocks || [];
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{page.title || 'untitled'} · [JUST-ARCHIVE]</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.cdnfonts.com/css/walkway-black-revoblique" rel="stylesheet">
+  <link href="https://fonts.cdnfonts.com/css/telegraf" rel="stylesheet">
+  <link href="https://fonts.cdnfonts.com/css/chivo-mono" rel="stylesheet">
+  <link rel="stylesheet" href="/src/styles/global.css">
+  <style>
+    .page-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    .block {
+      margin-bottom: 2rem;
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .gallery-grid img {
+      width: 100%;
+      border-radius: 0.5rem;
+      transition: transform 0.2s;
+    }
+    .gallery-grid img:hover {
+      transform: scale(1.02);
+    }
+    .social-links, .music-links {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .social-links a, .music-links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px dotted var(--border);
+    }
+    .article-card {
+      border-left: 2px solid var(--accent);
+      padding-left: 1rem;
+    }
+    hr {
+      margin: 2rem 0;
+      border-color: var(--border);
+    }
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: 0.7rem;
+      color: var(--footer-text);
+    }
+    .footer-logo {
+      font-family: "Walkway Black RevOblique", sans-serif;
+      letter-spacing: 2px;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  {blocks.map(block => (
+    <div class="block">
+      {block.type === 'header' && (
+        block.props.level === 1 ? <h1>{block.props.text}</h1> :
+        block.props.level === 2 ? <h2>{block.props.text}</h2> :
+        <h3>{block.props.text}</h3>
+      )}
+      {block.type === 'paragraph' && <p>{block.props.text}</p>}
+      {block.type === 'image' && (
+        <figure>
+          <img src={block.props.url} alt={block.props.caption} style="max-width:100%; border-radius:0.5rem;">
+          {block.props.caption && <figcaption style="font-size:0.8rem; color:var(--text-muted);">{block.props.caption}</figcaption>}
+        </figure>
+      )}
+      {block.type === 'gallery' && (
+        <div class="gallery-grid">
+          {block.props.images?.map(img => <img src={img} loading="lazy">)}
+        </div>
+      )}
+      {block.type === 'social' && (
+        <div class="social-links">
+          {block.props.links?.map(link => (
+            <a href={link.url} target="_blank" rel="noopener noreferrer">
+              <i class={link.icon}></i> {link.label}
+            </a>
+          ))}
+        </div>
+      )}
+      {block.type === 'music' && (
+        <div class="music-links">
+          {block.props.tracks?.map(track => (
+            <a href={track.url} target="_blank" rel="noopener noreferrer">
+              <i class={`fab fa-${track.platform === 'youtube' ? 'youtube' : track.platform === 'spotify' ? 'spotify' : 'apple'}`}></i>
+              {track.name}
+            </a>
+          ))}
+        </div>
+      )}
+      {block.type === 'article' && (
+        <div class="article-card">
+          <a href={block.props.url} target="_blank" rel="noopener noreferrer">
+            <strong>{block.props.title}</strong>
+          </a>
+          {block.props.description && <p style="font-size:0.9rem; margin-top:0.25rem;">{block.props.description}</p>}
+        </div>
+      )}
+    </div>
+  ))}
+  {blocks.length === 0 && <p style="color:var(--text-muted); text-align:center;">— empty archive —</p>}
+  <hr />
+  <footer>
+    <div class="footer-logo">[JUST-ARCHIVE]</div>
+    <p>hosted by <a href="/">just-archive</a> · <span id="viewCount"></span></p>
+  </footer>
+</div>
+
+<button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></button>
+
+<script>
+  // Theme toggle
+  const setTheme = (t) => { document.documentElement.setAttribute('data-theme', t); localStorage.setItem('theme', t); };
+  const saved = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  setTheme(saved);
+  document.getElementById('themeToggle').onclick = () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    setTheme(cur === 'dark' ? 'light' : 'dark');
+  };
+</script>
+</body>
+</html>

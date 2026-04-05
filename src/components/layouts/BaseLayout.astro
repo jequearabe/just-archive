@@ -1,0 +1,35 @@
+---
+export interface Props {
+  title?: string;
+}
+const { title = "Just Archive" } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="/src/styles/global.css">
+</head>
+<body>
+  <slot />
+  <button class="theme-toggle fixed bottom-4 right-4 z-50 bg-surface border border-border rounded-full p-2 shadow-lg" id="themeToggle">
+    <i class="fas fa-moon"></i>
+  </button>
+  <script>
+    const setTheme = (t) => { document.documentElement.setAttribute('data-theme', t); localStorage.setItem('theme', t); };
+    const saved = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    setTheme(saved);
+    const btn = document.getElementById('themeToggle');
+    if (btn) {
+      btn.onclick = () => {
+        const cur = document.documentElement.getAttribute('data-theme');
+        setTheme(cur === 'dark' ? 'light' : 'dark');
+      };
+    }
+  </script>
+</body>
+</html>

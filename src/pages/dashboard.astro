@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[JUST-ARCHIVE] / builder</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.cdnfonts.com/css/walkway-black-revoblique" rel="stylesheet">
+  <link href="https://fonts.cdnfonts.com/css/telegraf" rel="stylesheet">
+  <link href="https://fonts.cdnfonts.com/css/chivo-mono" rel="stylesheet">
+  <link rel="stylesheet" href="/src/styles/global.css">
+  <style>
+    /* Estilos del editor con la identidad de marca */
+    .dashboard-layout {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 280px;
+      background: var(--card-bg);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      overflow-y: auto;
+    }
+    .canvas {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+    .canvas-inner {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .property-panel {
+      width: 300px;
+      background: var(--card-bg);
+      border-left: 1px solid var(--border);
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+    .block-library {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+    .block-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      font-family: "Chivo Mono", monospace;
+      font-size: 0.7rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+    .block-btn:hover {
+      background: var(--accent);
+      color: var(--bg);
+      transform: translateY(-2px);
+    }
+    .block-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .block-item.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+    .block-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .drag-handle {
+      cursor: grab;
+    }
+    .delete-block {
+      background: none;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+    }
+    .property-group {
+      margin-bottom: 1rem;
+    }
+    .property-group label {
+      display: block;
+      font-size: 0.7rem;
+      margin-bottom: 0.25rem;
+      font-weight: 500;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 0.5rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      font-family: "Chivo Mono", monospace;
+      color: var(--text);
+    }
+    button {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-family: "Chivo Mono", monospace;
+    }
+    button.secondary {
+      background: var(--text-muted);
+    }
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+    .preview-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .preview-modal.active {
+      display: flex;
+    }
+    .preview-card {
+      background: var(--card-bg);
+      width: 90%;
+      max-width: 900px;
+      height: 80%;
+      border-radius: 1rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .preview-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+    }
+    .preview-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+    .inline-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      align-items: center;
+    }
+    .brand-small {
+      font-family: "Walkway Black RevOblique", sans-serif;
+      letter-spacing: 2px;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+<div class="dashboard-layout">
+  <!-- Left sidebar -->
+  <div class="sidebar">
+    <div>
+      <div class="brand-small">[JUST-ARCHIVE]</div>
+      <div style="font-size: 0.7rem; color: var(--text-muted);">builder</div>
+    </div>
+    <div>
+      <h3 style="font-size: 0.7rem; margin-bottom: 0.5rem;">blocks</h3>
+      <div class="block-library">
+        <button class="block-btn" data-type="header"><i class="fas fa-heading"></i> header</button>
+        <button class="block-btn" data-type="paragraph"><i class="fas fa-paragraph"></i> paragraph</button>
+        <button class="block-btn" data-type="image"><i class="fas fa-image"></i> image</button>
+        <button class="block-btn" data-type="gallery"><i class="fas fa-images"></i> gallery</button>
+        <button class="block-btn" data-type="social"><i class="fas fa-share-alt"></i> social</button>
+        <button class="block-btn" data-type="music"><i class="fas fa-music"></i> music</button>
+        <button class="block-btn" data-type="article"><i class="fas fa-newspaper"></i> article</button>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-size: 0.7rem; margin-bottom: 0.5rem;">settings</h3>
+      <input type="text" id="slugInput" placeholder="slug (e.g., my-page)" style="margin-bottom: 0.5rem;">
+      <input type="text" id="titleInput" placeholder="page title" style="margin-bottom: 0.5rem;">
+      <button id="saveBtn" style="width: 100%; margin-bottom: 0.5rem;">save page</button>
+      <button id="previewBtn" class="secondary" style="width: 100%;">preview</button>
+    </div>
+  </div>
+
+  <!-- Canvas -->
+  <div class="canvas">
+    <div class="canvas-inner" id="blocksContainer">
+      <div class="empty-state" id="emptyState">— no blocks yet —<br>click any block on the left</div>
+    </div>
+  </div>
+
+  <!-- Property panel -->
+  <div class="property-panel">
+    <h3 style="font-size: 0.7rem; margin-bottom: 1rem;">properties</h3>
+    <div id="propertyContent" style="color: var(--text-muted); text-align: center; padding: 2rem 0;">
+      select a block
+    </div>
+  </div>
+</div>
+
+<!-- Theme toggle flotante -->
+<button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></button>
+
+<!-- Preview modal -->
+<div id="previewModal" class="preview-modal">
+  <div class="preview-card">
+    <div class="preview-header">
+      <strong>live preview</strong>
+      <button id="closePreview" style="background: none; font-size: 1.5rem;">&times;</button>
+    </div>
+    <div class="preview-body" id="previewBody"></div>
+  </div>
+</div>
+
+<script>
+  // ---------- STATE ----------
+  let blocks = [];
+  let selectedBlockIndex = null;
+  let saveTimeout;
+
+  const slugInput = document.getElementById('slugInput');
+  const titleInput = document.getElementById('titleInput');
+  const blocksContainer = document.getElementById('blocksContainer');
+  const emptyState = document.getElementById('emptyState');
+  const propertyContent = document.getElementById('propertyContent');
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+
+  // Render blocks on canvas
+  function renderBlocks() {
+    if (!blocks.length) {
+      blocksContainer.innerHTML = '<div class="empty-state" id="emptyState">— no blocks yet —<br>click any block on the left</div>';
+      propertyContent.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem 0;">select a block</div>';
+      selectedBlockIndex = null;
+      return;
+    }
+    blocksContainer.innerHTML = blocks.map((block, idx) => `
+      <div class="block-item ${selectedBlockIndex === idx ? 'selected' : ''}" data-index="${idx}">
+        <div class="block-header">
+          <div><span class="drag-handle">⋮⋮</span> <strong>${block.type.toUpperCase()}</strong></div>
+          <button class="delete-block" onclick="deleteBlock(${idx})">✕</button>
+        </div>
+        <div>
+          ${getBlockPreview(block)}
+        </div>
+      </div>
+    `).join('');
+    document.querySelectorAll('.block-item').forEach((el, i) => {
+      el.addEventListener('click', (e) => {
+        if (e.target.closest('.delete-block')) return;
+        selectedBlockIndex = i;
+        renderBlocks();
+        updatePropertyPanel(blocks[i], i);
+      });
+    });
+    attachDragEvents();
+  }
+
+  function getBlockPreview(block) {
+    switch (block.type) {
+      case 'header': return `<strong>${escapeHtml(block.props.text || 'Header')}</strong>`;
+      case 'paragraph': return `<p>${escapeHtml((block.props.text || '').substring(0, 80))}</p>`;
+      case 'image': return `<img src="${escapeHtml(block.props.url)}" style="max-height: 60px;">`;
+      case 'gallery': return `<div>${(block.props.images || []).length} images</div>`;
+      case 'social': return `<div>${(block.props.links || []).length} links</div>`;
+      case 'music': return `<div>${(block.props.tracks || []).length} tracks</div>`;
+      case 'article': return `<div>${escapeHtml(block.props.title || 'Article')}</div>`;
+      default: return '';
+    }
+  }
+
+  function updatePropertyPanel(block, idx) {
+    const type = block.type;
+    let html = '';
+    if (type === 'header') {
+      html = `
+        <div class="property-group"><label>level</label><select id="prop_level">
+          <option value="1" ${block.props.level===1?'selected':''}>H1</option>
+          <option value="2" ${block.props.level===2?'selected':''}>H2</option>
+          <option value="3" ${block.props.level===3?'selected':''}>H3</option>
+        </select></div>
+        <div class="property-group"><label>text</label><input id="prop_text" value="${escapeHtml(block.props.text||'')}"></div>
+      `;
+    } else if (type === 'paragraph') {
+      html = `<div class="property-group"><label>content</label><textarea id="prop_text" rows="4">${escapeHtml(block.props.text||'')}</textarea></div>`;
+    } else if (type === 'image') {
+      html = `
+        <div class="property-group"><label>url</label><input id="prop_url" value="${escapeHtml(block.props.url||'')}"></div>
+        <div class="property-group"><label>caption</label><input id="prop_caption" value="${escapeHtml(block.props.caption||'')}"></div>
+      `;
+    } else if (type === 'gallery') {
+      const images = block.props.images || [];
+      html = `<div class="property-group"><label>images</label><div id="galleryList">${images.map((img,i)=>`<div class="inline-group"><input value="${escapeHtml(img)}" data-imgidx="${i}" class="gallery-url"><button onclick="removeGalleryImage(${idx},${i})" style="background:#ef4444;">✕</button></div>`).join('')}</div><button onclick="addGalleryImage(${idx})" class="secondary">+ add</button></div>`;
+    } else if (type === 'social') {
+      const links = block.props.links || [];
+      html = `<div class="property-group"><label>links</label><div id="socialList">${links.map((link,i)=>`<div class="inline-group"><input placeholder="label" value="${escapeHtml(link.label)}" data-linkidx="${i}" class="social-label"><input placeholder="url" value="${escapeHtml(link.url)}" data-linkidx="${i}" class="social-url"><input placeholder="icon class" value="${escapeHtml(link.icon)}" data-linkidx="${i}" class="social-icon"><button onclick="removeSocialLink(${idx},${i})" style="background:#ef4444;">✕</button></div>`).join('')}</div><button onclick="addSocialLink(${idx})" class="secondary">+ add link</button></div>`;
+    } else if (type === 'music') {
+      const tracks = block.props.tracks || [];
+      html = `<div class="property-group"><label>tracks</label><div id="musicList">${tracks.map((track,i)=>`<div class="inline-group"><select data-trackidx="${i}" class="music-platform"><option value="youtube" ${track.platform==='youtube'?'selected':''}>YouTube</option><option value="spotify" ${track.platform==='spotify'?'selected':''}>Spotify</option><option value="applemusic" ${track.platform==='applemusic'?'selected':''}>Apple Music</option></select><input placeholder="name" value="${escapeHtml(track.name)}" data-trackidx="${i}" class="music-name"><input placeholder="url" value="${escapeHtml(track.url)}" data-trackidx="${i}" class="music-url"><button onclick="removeMusicTrack(${idx},${i})" style="background:#ef4444;">✕</button></div>`).join('')}</div><button onclick="addMusicTrack(${idx})" class="secondary">+ add track</button></div>`;
+    } else if (type === 'article') {
+      html = `
+        <div class="property-group"><label>title</label><input id="prop_title" value="${escapeHtml(block.props.title||'')}"></div>
+        <div class="property-group"><label>url</label><input id="prop_url" value="${escapeHtml(block.props.url||'')}"></div>
+        <div class="property-group"><label>description</label><textarea id="prop_desc" rows="3">${escapeHtml(block.props.description||'')}</textarea></div>
+      `;
+    }
+    propertyContent.innerHTML = html;
+    // attach listeners
+    if (type === 'header') {
+      document.getElementById('prop_level')?.addEventListener('change', (e) => { blocks[idx].props.level = parseInt(e.target.value); autoSave(); renderBlocks(); });
+      document.getElementById('prop_text')?.addEventListener('input', (e) => { blocks[idx].props.text = e.target.value; autoSave(); renderBlocks(); });
+    } else if (type === 'paragraph') {
+      document.getElementById('prop_text')?.addEventListener('input', (e) => { blocks[idx].props.text = e.target.value; autoSave(); renderBlocks(); });
+    } else if (type === 'image') {
+      document.getElementById('prop_url')?.addEventListener('input', (e) => { blocks[idx].props.url = e.target.value; autoSave(); renderBlocks(); });
+      document.getElementById('prop_caption')?.addEventListener('input', (e) => { blocks[idx].props.caption = e.target.value; autoSave(); renderBlocks(); });
+    } else if (type === 'article') {
+      document.getElementById('prop_title')?.addEventListener('input', (e) => { blocks[idx].props.title = e.target.value; autoSave(); renderBlocks(); });
+      document.getElementById('prop_url')?.addEventListener('input', (e) => { blocks[idx].props.url = e.target.value; autoSave(); renderBlocks(); });
+      document.getElementById('prop_desc')?.addEventListener('input', (e) => { blocks[idx].props.description = e.target.value; autoSave(); renderBlocks(); });
+    } else if (type === 'gallery') {
+      document.querySelectorAll('.gallery-url').forEach(inp => {
+        inp.addEventListener('input', (e) => { blocks[idx].props.images[parseInt(inp.dataset.imgidx)] = inp.value; autoSave(); renderBlocks(); });
+      });
+    } else if (type === 'social') {
+      document.querySelectorAll('.social-label, .social-url, .social-icon').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+          const i = parseInt(inp.dataset.linkidx);
+          const field = inp.classList.contains('social-label') ? 'label' : inp.classList.contains('social-url') ? 'url' : 'icon';
+          blocks[idx].props.links[i][field] = inp.value;
+          autoSave(); renderBlocks();
+        });
+      });
+    } else if (type === 'music') {
+      document.querySelectorAll('.music-platform, .music-name, .music-url').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+          const i = parseInt(inp.dataset.trackidx);
+          const field = inp.classList.contains('music-platform') ? 'platform' : inp.classList.contains('music-name') ? 'name' : 'url';
+          blocks[idx].props.tracks[i][field] = inp.value;
+          autoSave(); renderBlocks();
+        });
+      });
+    }
+  }
+
+  window.removeGalleryImage = (blockIdx, imgIdx) => { blocks[blockIdx].props.images.splice(imgIdx,1); autoSave(); renderBlocks(); if(selectedBlockIndex===blockIdx) updatePropertyPanel(blocks[blockIdx],blockIdx); };
+  window.addGalleryImage = (blockIdx) => { if(!blocks[blockIdx].props.images) blocks[blockIdx].props.images=[]; blocks[blockIdx].props.images.push(''); autoSave(); renderBlocks(); if(selectedBlockIndex===blockIdx) updatePropertyPanel(blocks[blockIdx],blockIdx); };
+  window.removeSocialLink = (blockIdx, linkIdx) => { blocks[blockIdx].props.links.splice(linkIdx,1); autoSave(); renderBlocks(); if(selectedBlockIndex===blockIdx) updatePropertyPanel(blocks[blockIdx],blockIdx); };
+  window.addSocialLink = (blockIdx) => { if(!blocks[blockIdx].props.links) blocks[blockIdx].props.links=[]; blocks[blockIdx].props.links.push({label:'',url:'',icon:'fas fa-link'}); autoSave(); renderBlocks(); if(selectedBlockIndex===blockIdx) updatePropertyPanel(blocks[blockIdx],blockIdx); };
+  window.removeMusicTrack = (blockIdx, trackIdx) => { blocks[blockIdx].props.tracks.splice(trackIdx,1); autoSave(); renderBlocks(); if(selectedBlockIndex===blockIdx) updatePropertyPanel(blocks[blockIdx],blockIdx); };
+  window.addMusicTrack = (blockIdx) => { if(!blocks[blockIdx].props.tracks) blocks[blockIdx].props.tracks=[]; blocks[blockIdx].props.tracks.push({platform:'youtube',name:'',url:''}); autoSave(); renderBlocks(); if(selectedBlockIndex===blockIdx) updatePropertyPanel(blocks[blockIdx],blockIdx); };
+
+  function attachDragEvents() {
+    let dragSrc = null;
+    const items = document.querySelectorAll('.block-item');
+    items.forEach(item => {
+      item.setAttribute('draggable', 'true');
+      item.addEventListener('dragstart', (e) => { dragSrc = item; e.dataTransfer.effectAllowed = 'move'; });
+      item.addEventListener('dragover', (e) => e.preventDefault());
+      item.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (dragSrc && dragSrc !== item) {
+          const srcIdx = parseInt(dragSrc.getAttribute('data-index'));
+          const dstIdx = parseInt(item.getAttribute('data-index'));
+          const moved = blocks[srcIdx];
+          blocks.splice(srcIdx, 1);
+          blocks.splice(dstIdx, 0, moved);
+          renderBlocks();
+          autoSave();
+        }
+        dragSrc = null;
+      });
+    });
+  }
+
+  function addBlock(type) {
+    let props = {};
+    switch (type) {
+      case 'header': props = { level: 2, text: 'new header' }; break;
+      case 'paragraph': props = { text: '' }; break;
+      case 'image': props = { url: 'https://picsum.photos/400/300', caption: '' }; break;
+      case 'gallery': props = { images: [] }; break;
+      case 'social': props = { links: [{ label: 'twitter', url: 'https://twitter.com', icon: 'fab fa-twitter' }] }; break;
+      case 'music': props = { tracks: [{ platform: 'youtube', name: 'example', url: 'https://youtu.be/example' }] }; break;
+      case 'article': props = { title: 'article title', url: 'https://example.com', description: '' }; break;
+      default: return;
+    }
+    blocks.push({ id: Date.now(), type, props });
+    renderBlocks();
+    autoSave();
+  }
+  window.deleteBlock = (idx) => {
+    blocks.splice(idx, 1);
+    if (selectedBlockIndex === idx) selectedBlockIndex = null;
+    else if (selectedBlockIndex > idx) selectedBlockIndex--;
+    renderBlocks();
+    autoSave();
+  };
+
+  async function autoSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      await fetch('/api/user/page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ slug: slugInput.value, title: titleInput.value, content_json: { blocks } })
+      });
+    }, 1000);
+  }
+
+  async function loadPage() {
+    const token = localStorage.getItem('token');
+    if (!token) { window.location.href = '/'; return; }
+    const res = await fetch('/api/user/page', { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) {
+      const data = await res.json();
+      const page = data.page || { slug: '', title: '', content_json: { blocks: [] } };
+      slugInput.value = page.slug || '';
+      titleInput.value = page.title || '';
+      blocks = page.content_json?.blocks || [];
+      renderBlocks();
+    } else if (res.status === 401) {
+      localStorage.clear();
+      window.location.href = '/';
+    }
+  }
+
+  document.getElementById('saveBtn').onclick = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const res = await fetch('/api/user/page', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ slug: slugInput.value, title: titleInput.value, content_json: { blocks } })
+    });
+    if (res.ok) alert('page saved');
+    else alert('error saving');
+  };
+
+  function generatePreviewHTML() {
+    function renderBlock(block) {
+      switch (block.type) {
+        case 'header': const lvl = block.props.level || 2; return lvl===1 ? `<h1>${escapeHtml(block.props.text)}</h1>` : lvl===2 ? `<h2>${escapeHtml(block.props.text)}</h2>` : `<h3>${escapeHtml(block.props.text)}</h3>`;
+        case 'paragraph': return `<p>${escapeHtml(block.props.text)}</p>`;
+        case 'image': return `<figure><img src="${escapeHtml(block.props.url)}" style="max-width:100%"><figcaption>${escapeHtml(block.props.caption)}</figcaption></figure>`;
+        case 'gallery': return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem;">${(block.props.images||[]).map(img=>`<img src="${escapeHtml(img)}" style="border-radius:0.5rem;">`).join('')}</div>`;
+        case 'social': return `<div style="display:flex;gap:1rem;flex-wrap:wrap;">${(block.props.links||[]).map(link=>`<a href="${escapeHtml(link.url)}"><i class="${link.icon}"></i> ${escapeHtml(link.label)}</a>`).join('')}</div>`;
+        case 'music': return `<div style="display:flex;flex-direction:column;gap:0.5rem;">${(block.props.tracks||[]).map(t=>`<a href="${escapeHtml(t.url)}"><i class="fab fa-${t.platform==='youtube'?'youtube':t.platform==='spotify'?'spotify':'apple'}"></i> ${escapeHtml(t.name)}</a>`).join('')}</div>`;
+        case 'article': return `<div style="border-left:3px solid var(--accent);padding-left:1rem;"><a href="${escapeHtml(block.props.url)}"><strong>${escapeHtml(block.props.title)}</strong></a><p>${escapeHtml(block.props.description)}</p></div>`;
+        default: return '';
+      }
+    }
+    return `<div style="max-width:800px;margin:0 auto;">${blocks.map(renderBlock).join('')}</div>`;
+  }
+
+  const modal = document.getElementById('previewModal');
+  const previewBody = document.getElementById('previewBody');
+  const closePreview = document.getElementById('closePreview');
+  document.getElementById('previewBtn').onclick = () => {
+    previewBody.innerHTML = generatePreviewHTML();
+    modal.classList.add('active');
+  };
+  closePreview.onclick = () => modal.classList.remove('active');
+  modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('active'); };
+
+  // Logout button (floating, simple)
+  const logoutBtn = document.createElement('button');
+  logoutBtn.innerText = 'logout';
+  logoutBtn.style.position = 'fixed';
+  logoutBtn.style.bottom = '1rem';
+  logoutBtn.style.left = '1rem';
+  logoutBtn.style.zIndex = '999';
+  logoutBtn.style.background = '#ef4444';
+  logoutBtn.style.padding = '0.25rem 0.75rem';
+  logoutBtn.style.fontSize = '0.7rem';
+  logoutBtn.onclick = () => { localStorage.clear(); window.location.href = '/'; };
+  document.body.appendChild(logoutBtn);
+
+  document.querySelectorAll('.block-btn').forEach(btn => {
+    btn.addEventListener('click', () => addBlock(btn.dataset.type));
+  });
+  slugInput.addEventListener('input', autoSave);
+  titleInput.addEventListener('input', autoSave);
+
+  // Theme
+  const setTheme = (t) => { document.documentElement.setAttribute('data-theme', t); localStorage.setItem('theme', t); };
+  const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  setTheme(savedTheme);
+  document.getElementById('themeToggle').onclick = () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    setTheme(cur === 'dark' ? 'light' : 'dark');
+  };
+
+  loadPage();
+</script>
+</body>
+</html>
